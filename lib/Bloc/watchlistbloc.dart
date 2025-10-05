@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitledwebsocket/Bloc/watchlist_event.dart';
 import 'package:untitledwebsocket/Bloc/watchlist_state.dart';
 import 'package:untitledwebsocket/script.dart';
 
+import '../websocket.dart';
+
 
 class WatchlistBloc extends Bloc<WatchlistEvent, WatchlistState> {
   Timer? _timer;
+  final WebSocketService _webSocketService;
+  StreamSubscription? _socketSubscription;
 
-  WatchlistBloc() : super(const WatchlistState()) {
+  WatchlistBloc(this._webSocketService) : super(const WatchlistState()) {
     // Initialize with some fake scripts
     final Map<String, List<Script>> initialScripts = {
       "Tech": [
@@ -30,15 +35,25 @@ class WatchlistBloc extends Bloc<WatchlistEvent, WatchlistState> {
 
     emit(state.copyWith(scripts: initialScripts));
 
-    // Simulate live LTP updates
     _timer = Timer.periodic(const Duration(seconds: 2), (_) {
       final random = Random();
       for (var wl in state.scripts.keys) {
         for (var s in state.scripts[wl]!) {
           final newLtp = s.ltp + (random.nextBool() ? 5 : -5);
-          add(UpdateLtp(s.symbol, newLtp));
+          final fakeUpdate = {
+            "symbol":s.symbol,
+            "ltp": newLtp,
+          };
+          _webSocketService.sendMessage(jsonEncode(fakeUpdate));
+
         }
       }
+    });
+
+    _socketSubscription = _webSocketService.stream.listen((data) {
+      final symbol = data["symbol"];
+      final ltp = (data["ltp"] as num).toDouble();
+      add(UpdateLtp(symbol, ltp));
     });
   }
 
@@ -63,6 +78,8 @@ class WatchlistBloc extends Bloc<WatchlistEvent, WatchlistState> {
 
   @override
   Future<void> close() {
+    _socketSubscription?.cancel();
+    _webSocketService.dispose();
     _timer?.cancel();
     return super.close();
   }

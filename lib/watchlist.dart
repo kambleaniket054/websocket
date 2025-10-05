@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:untitledwebsocket/script.dart';
+import 'package:untitledwebsocket/websocket.dart';
 
 import 'Bloc/watchlist_event.dart';
 import 'Bloc/watchlist_state.dart';
@@ -13,7 +14,7 @@ class WatchlistPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => WatchlistBloc(),
+      create: (_) => WatchlistBloc(WebSocketService()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Watchlist"),
