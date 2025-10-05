@@ -48,7 +48,8 @@ dev_dependencies:
   equatable: any
   bloc: any
   flutter_bloc: any
-
+  web_socket: any
+  web_socket_channel: ^3.0.3
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
